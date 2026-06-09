@@ -1,197 +1,201 @@
-# ARSW - Proyecto: Matrix Escape
+# ARSW - Project: Matrix Escape
 
-**Autor:** Eduardo Rico Duarte
+**Author:** Eduardo Rico Duarte
 
-**Curso:** Arquitecturas de Software (ARSW)
+**Course:** Software Architectures (ARSW)
 
-**Institución:** Escuela Colombiana de Ingeniería Julio Garavito
-
----
-
-# Introducción
-
-El presente proyecto consiste en el desarrollo de una simulación inspirada en la película *The Matrix*, donde el personaje principal, Neo, debe escapar de la matriz alcanzando uno de los teléfonos disponibles en el mapa antes de ser capturado por los agentes.
-
-La simulación se desarrolla sobre una cuadrícula bidimensional y permite al usuario configurar dinámicamente la cantidad de agentes, muros y teléfonos que participarán en cada ejecución. El comportamiento de todos los personajes es automático, por lo que la simulación evoluciona de manera autónoma una vez iniciada.
+**Institution:** Escuela Colombiana de Ingeniería Julio Garavito
 
 ---
 
-# Marco Teórico
+# Introduction
 
-Las aplicaciones concurrentes permiten ejecutar múltiples tareas de manera aparentemente simultánea mediante el uso de hilos (Threads). Este enfoque resulta especialmente útil en simulaciones, videojuegos y sistemas interactivos, donde diferentes elementos deben actualizar su comportamiento de forma independiente sin bloquear la ejecución general del programa.
+This project consists of the development of a simulation inspired by *The Matrix*, where the main character, Neo, must escape the Matrix by reaching one of the available telephones on the map before being captured by the agents.
 
-En Java, los hilos permiten modelar entidades autónomas que evolucionan en el tiempo. Sin embargo, cuando varios componentes interactúan sobre un mismo entorno compartido, es necesario coordinar su ejecución para garantizar la consistencia del sistema y evitar comportamientos inesperados.
-
----
-
-# Objetivos
-
-## Objetivo General
-
-Desarrollar una simulación gráfica basada en el universo de Matrix, aplicando conceptos de arquitectura de software como concurrencia  para modelar el comportamiento autónomo de múltiples entidades dentro de un entorno compartido.
-
-## Objetivos Específicos
-
-* Implementar una cuadrícula bidimensional que represente el entorno de la simulación.
-* Permitir al usuario configurar la cantidad de agentes, muros y teléfonos antes de iniciar la ejecución.
-* Implementar el comportamiento automático de Neo y los agentes.
-* Gestionar condiciones de victoria y derrota.
+The simulation takes place on a two-dimensional grid and allows the user to dynamically configure the number of agents, walls, and telephones that will participate in each execution. The behavior of all characters is automatic, allowing the simulation to evolve autonomously once started.
 
 ---
 
-# Desarrollo
+# Theoretical Framework
 
-## Diseño de la Simulación
+Concurrent applications allow multiple tasks to execute seemingly simultaneously through the use of threads. This approach is especially useful in simulations, video games, and interactive systems, where different elements must update their behavior independently without blocking the overall execution of the program.
 
-Se construyó una cuadrícula de 18 × 18 posiciones, reutilizando parte de la infraestructura desarrollada previamente en el proyecto **BadDopoIceCream**, especialmente la representación matricial del tablero y la organización general del dominio.
+In Java, threads make it possible to model autonomous entities that evolve over time. However, when multiple components interact within a shared environment, their execution must be coordinated to ensure system consistency and prevent unexpected behaviors.
 
-El modelo se estructuró utilizando dos jerarquías principales:
+---
 
-### Entidades
+# Objectives
 
-Corresponden a los elementos capaces de desplazarse dentro de la matriz.
+## General Objective
+
+Develop a graphical simulation based on the Matrix universe, applying software architecture concepts such as concurrency to model the autonomous behavior of multiple entities within a shared environment.
+
+## Specific Objectives
+
+* Implement a two-dimensional grid representing the simulation environment.
+* Allow the user to configure the number of agents, walls, and telephones before starting the simulation.
+* Implement the automatic behavior of Neo and the agents.
+* Manage victory and defeat conditions.
+
+---
+
+# Development
+
+## Simulation Design
+
+An 18 × 18 grid was implemented, reusing part of the infrastructure previously developed in the **BadDopoIceCream** project, especially the board matrix representation and the overall domain organization.
+
+The model was structured using two main hierarchies:
+
+### Entities
+
+These correspond to the elements capable of moving within the grid.
 
 * **Neo**
 
-  * Personaje principal.
-  * Se mueve automáticamente buscando alcanzar el teléfono más cercano.
-  * Pierde la partida si es alcanzado por un agente.
+  * Main character.
+  * Automatically moves toward the nearest telephone.
+  * Loses the game if captured by an agent.
 
-* **Agente**
+* **Agent**
 
-  * Enemigo de la simulación.
-  * Se mueve automáticamente persiguiendo la posición actual de Neo.
-  * No puede atravesar muros ni ocupar casillas con teléfonos.
+  * Enemy of the simulation.
+  * Automatically moves toward Neo's current position.
+  * Cannot pass through walls or occupy telephone cells.
 
-### Bloques
+### Blocks
 
-Representan elementos estáticos del escenario.
+These represent static elements of the environment.
 
-* **Muro**
+* **Wall**
 
-  * Obstáculo que bloquea el movimiento de Neo y de los agentes.
+  * Obstacle that blocks the movement of both Neo and the agents.
 
-* **Teléfono**
+* **Telephone**
 
-  * Punto de escape para Neo.
-  * Si Neo alcanza un teléfono, la simulación finaliza exitosamente.
-  * Para los agentes funciona como una casilla bloqueada.
-
----
-
-## Configuración Dinámica
-
-Antes de iniciar la simulación, el usuario puede seleccionar:
-
-* Cantidad de agentes: entre 1 y 5.
-* Cantidad de muros: entre 1 y 15.
-* Cantidad de teléfonos: entre 1 y 4.
-
-Todos los elementos son ubicados aleatoriamente dentro del tablero.
-
-Como restricción adicional, alrededor de la posición inicial de Neo se define una zona de seguridad de tres casillas en todas las direcciones, evitando que agentes, muros o teléfonos aparezcan demasiado cerca del jugador al inicio de la partida.
+  * Escape point for Neo.
+  * If Neo reaches a telephone, the simulation ends successfully.
+  * For agents, telephones behave as blocked cells.
 
 ---
 
-## Interfaz Gráfica
+## Dynamic Configuration
 
-La aplicación fue dividida en dos ventanas principales:
+Before starting the simulation, the user can select:
 
-### Menú Principal
+* Number of agents: between 1 and 5.
+* Number of walls: between 1 and 15.
+* Number of telephones: between 1 and 4.
 
-Permite al usuario:
+All elements are randomly placed on the board.
 
-* Seleccionar la cantidad de agentes.
-* Seleccionar la cantidad de muros.
-* Seleccionar la cantidad de teléfonos.
-* Iniciar la simulación.
-
-### Nivel de Juego
-
-Contiene:
-
-* Representación gráfica de la cuadrícula.
-* Temporizador regresivo.
-* Botón de inicio.
-* Botón de pausa y reanudación.
-* Visualización de Neo, agentes, muros y teléfonos mediante imágenes.
+As an additional constraint, a safety zone of three cells in every direction is created around Neo's initial position, preventing agents, walls, or telephones from spawning too close to the player at the beginning of the game.
 
 ---
 
-## Condiciones de Finalización
+## Graphical User Interface
 
-La simulación puede finalizar de tres formas:
+The application was divided into two main windows:
 
-### Victoria
+### Main Menu
 
-Neo alcanza cualquiera de los teléfonos presentes en el tablero.
+Allows the user to:
 
-### Derrota por Captura
+* Select the number of agents.
+* Select the number of walls.
+* Select the number of telephones.
+* Start the simulation.
 
-Un agente alcanza la posición ocupada por Neo.
+### Game Level
 
-### Derrota por Tiempo
+Contains:
 
-El temporizador llega a cero antes de que Neo alcance un teléfono.
-
----
-## Implementación de Concurrencia
-
-Uno de los aspectos centrales del proyecto fue la incorporación de concurrencia para representar el comportamiento autónomo de los personajes de la simulación.
-
-Cada agente y Neo se ejecutan de forma independiente mediante tareas que actualizan periódicamente su posición dentro de la matriz. De esta manera, todos los personajes pueden actuar simultáneamente sobre el mismo entorno sin depender de una secuencia estrictamente lineal de ejecución.
-
-La actualización constante de las entidades permite simular la persecución de los agentes y la búsqueda de los teléfonos por parte de Neo, generando un comportamiento dinámico similar al observado en sistemas concurrentes reales.
-
-Para evitar inconsistencias en el tablero, todos los movimientos se realizan respetando las restricciones definidas por los muros, los teléfonos y los límites de la cuadrícula.
+* Graphical representation of the grid.
+* Countdown timer.
+* Start button.
+* Pause and resume button.
+* Visual representation of Neo, agents, walls, and telephones through images.
 
 ---
-# Ejecución 
-## Compilar 
+
+## End Conditions
+
+The simulation can end in three different ways:
+
+### Victory
+
+Neo reaches any of the telephones present on the board.
+
+### Defeat by Capture
+
+An agent reaches Neo's position.
+
+### Defeat by Time Limit
+
+The countdown timer reaches zero before Neo reaches a telephone.
+
+---
+
+## Concurrency Implementation
+
+One of the main aspects of the project was the incorporation of concurrency to represent the autonomous behavior of the simulation characters.
+
+Neo and the agents operate independently through tasks that periodically update their positions on the grid. This allows all characters to act simultaneously within the same environment instead of following a strictly sequential execution flow.
+
+The continuous updates of the entities make it possible to simulate the agents' pursuit behavior and Neo's search for telephones, generating a dynamic system similar to real concurrent applications.
+
+To maintain consistency, all movements respect the restrictions imposed by walls, telephones, and the limits of the grid.
+
+---
+
+# Execution
+
+## Compile
+
 ```java
 javac -d bin src/main/java/dominio/*.java src/main/java/presentacion/*.java
 ```
 
-## Ejecutar 
+## Run
 ```java
 java -cp bin main.java.presentacion.Matrix
 ```
 
-# Evidencias
+# Evidence
 
-## Menú de Configuración
+## Configuration Menu
 
 ![alt text](imagenes/ev1.png)
 
 ---
 
-## Simulación en Ejecución
+## Running Simulation
 
 ![alt text](imagenes/ev2.png)
 ---
 
-## Victoria
+## Victory
 
 ![alt text](imagenes/ev3.png)
 
 ---
 
-## Derrota
+## Defeat
 
 ![alt text](imagenes/ev4.png)
 
 ---
 
-# Conclusiones
+# Conclusions
 
-* Se implementó exitosamente una simulación basada en una cuadrícula bidimensional configurable por el usuario.
-* La reutilización de componentes desarrollados previamente en el proyecto **BadDopoIceCream** permitió reducir el tiempo de implementación y mantener una arquitectura organizada.
-* La implementación permitió aplicar conceptos de concurrencia estudiados en el curso, modelando comportamientos autónomos para Neo y los agentes mediante tareas que se ejecutan de manera independiente dentro de la simulación.
-* La simulación cumple con las reglas establecidas inicialmente y presenta comportamientos autónomos tanto para Neo como para los agentes.
+* A configurable simulation based on a two-dimensional grid was successfully implemented.
+* Reusing components previously developed in the BadDopoIceCream project reduced implementation time and helped maintain an organized architecture.
+* The project enabled the application of concurrency concepts studied during the course by modeling autonomous behaviors for Neo and the agents through independently executed tasks within the simulation.
+* The simulation fulfills all the initially defined rules and provides autonomous behavior for both Neo and the agents.
 
 ---
 
-# Bibliografía
+# References
 
 Benavides Navarro, L. D., & Gualtero Martínez, R. H. (2024). *Concurrency and Threads in Java and Go* [Course slides].
 
