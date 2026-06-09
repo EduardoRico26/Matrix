@@ -1,11 +1,8 @@
 package main.java.dominio;
 
-/**
- * Controla la lógica principal del juego.
- */
 public class Nivel {
 
-    private GameBoard board;
+    private final GameBoard board;
 
     public Nivel(GameBoard board) {
         this.board = board;
@@ -15,21 +12,7 @@ public class Nivel {
         return board;
     }
 
-    /**
-     * Actualiza el nivel.
-     *
-     * Retorna:
-     * 0 = continuar
-     * 1 = game over
-     * 2 = victoria
-     */
-    public int actualizar() {
-
-        // Neo se mueve
-        board.actualizarNeo();
-
-        // Agentes se mueven
-        board.actualizarAgentes();
+    public int verificarEstado() {
 
         Neo neo = board.getNeo();
 
@@ -37,24 +20,12 @@ public class Nivel {
             return 1;
         }
 
-        // ¿Neo llegó a un teléfono?
-        for (Telefono t : board.getTelefonos()) {
-
-            if (neo.getX() == t.getX()
-                    && neo.getY() == t.getY()) {
-
-                return 2; // victoria
-            }
+        if (board.neoLlegoTelefono()) {
+            return 2;
         }
 
-        // ¿Un agente atrapó a Neo?
-        for (Agente a : board.getAgentes()) {
-
-            if (a.getX() == neo.getX()
-                    && a.getY() == neo.getY()) {
-
-                return 1; // game over
-            }
+        if (board.neoCapturado()) {
+            return 1;
         }
 
         return 0;

@@ -12,12 +12,29 @@ public class GameBoard {
     private final Celda[][] celdas;
 
     private Neo neo;
-
+    private volatile boolean juegoTerminado = false;
     private final List<Agente> agentes;
     private final List<Telefono> telefonos;
     private final List<Muro> muros;
 
     private final Random random;
+    private volatile boolean pausado = true;
+
+    public boolean isPausado() {
+        return pausado;
+    }
+
+    public void setPausado(boolean pausado) {
+        this.pausado = pausado;
+    }
+
+    public boolean isJuegoTerminado() {
+    return juegoTerminado;
+    }
+
+    public void setJuegoTerminado(boolean juegoTerminado) {
+        this.juegoTerminado = juegoTerminado;
+    }
 
     public GameBoard() {
 
@@ -345,9 +362,11 @@ public class GameBoard {
 
         for (Agente agente : agentes) {
 
-            if (agente.getX() == neo.getX()
-                    && agente.getY() == neo.getY()) {
+            int distancia =
+                    Math.abs(agente.getX() - neo.getX())
+                + Math.abs(agente.getY() - neo.getY());
 
+            if (distancia <= 1) {
                 return true;
             }
         }

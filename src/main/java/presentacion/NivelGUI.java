@@ -4,8 +4,10 @@ import main.java.dominio.*;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.ArrayList;
+import java.util.List;
 
-public class NivelGUI extends JFrame {
+public class NivelGUI extends JFrame implements NivelGUIBridge {
 
     private static final int CELL_SIZE = 32;
 
@@ -17,10 +19,13 @@ public class NivelGUI extends JFrame {
     private JLabel lblTiempo;
 
     private JButton btnPlayPause;
-    private JButton btnRestart;
+    //private JButton btnRestart;
 
-    private Timer gameTimer;
-    private Timer tiempoTimer;
+    private Timer repaintTimer;
+
+    private HiloNeo hiloNeo;
+    private HiloTiempo hiloTiempo;
+    private List<HiloAgente> hilosAgentes;
 
     private boolean pausado = true;
 
@@ -39,13 +44,13 @@ public class NivelGUI extends JFrame {
                 GameConfig.getCantidadMuros(),
                 GameConfig.getCantidadTelefonos());
 
+        board.setPausado(true);
+
         nivel = new Nivel(board);
 
         prepararPanel();
-
         prepararHUD();
-
-        prepararTimers();
+        prepararRepaint();
 
         pack();
 
@@ -90,26 +95,26 @@ public class NivelGUI extends JFrame {
 
         btnPlayPause = new JButton("▶");
 
-        btnRestart = new JButton("⟳");
+        //btnRestart = new JButton("⟳");
 
         hud.add(lblTiempo);
         hud.add(btnPlayPause);
-        hud.add(btnRestart);
+        //hud.add(btnRestart);
 
         add(hud, BorderLayout.NORTH);
 
         btnPlayPause.addActionListener(e -> cambiarEstado());
 
-        btnRestart.addActionListener(e -> reiniciar());
+        //btnRestart.addActionListener(e -> reiniciar());
     }
 
-    private void prepararTimers() {
+    private void prepararRepaint() {
 
-        gameTimer = new Timer(350, e -> {
+        repaintTimer = new Timer(100, e -> {
 
-            int resultado = nivel.actualizar();
+            int estado = nivel.verificarEstado();
 
-            if(resultado == 1){
+            if (estado == 1) {
 
                 detenerTodo();
 
@@ -122,7 +127,7 @@ public class NivelGUI extends JFrame {
                 return;
             }
 
-            if(resultado == 2){
+            if (estado == 2) {
 
                 detenerTodo();
 
@@ -138,44 +143,49 @@ public class NivelGUI extends JFrame {
             panel.repaint();
         });
 
-        tiempoTimer = new Timer(1000, e -> {
+        repaintTimer.start();
+    }
 
-            tiempoRestante--;
+    private void iniciarHilos() {
 
-            int min = tiempoRestante / 60;
-            int seg = tiempoRestante % 60;
+        hiloNeo = new HiloNeo(board);
+        hiloNeo.start();
 
-            lblTiempo.setText(
-                    String.format("%02d:%02d", min, seg));
+        hilosAgentes = new ArrayList<>();
 
-            if(tiempoRestante <= 0){
+        for (Agente agente : board.getAgentes()) {
 
-                detenerTodo();
+            HiloAgente hilo =
+                    new HiloAgente(board, agente);
 
-                JOptionPane.showMessageDialog(
-                        this,
-                        "Tiempo agotado",
-                        "GAME OVER",
-                        JOptionPane.ERROR_MESSAGE);
-            }
-        });
+            hilo.start();
+
+            hilosAgentes.add(hilo);
+        }
+
+        hiloTiempo = new HiloTiempo(this, board);
+        hiloTiempo.start();
     }
 
     private void cambiarEstado() {
 
-        pausado = !pausado;
+        if (pausado) {
 
-        if(!pausado){
+            if (hiloNeo == null) {
+                iniciarHilos();
+            }
 
-            gameTimer.start();
-            tiempoTimer.start();
+            pausado = false;
+
+            board.setPausado(false);
 
             btnPlayPause.setText("⏸");
-        }
-        else{
 
-            gameTimer.stop();
-            tiempoTimer.stop();
+        } else {
+
+            pausado = true;
+
+            board.setPausado(true);
 
             btnPlayPause.setText("▶");
         }
@@ -183,8 +193,29 @@ public class NivelGUI extends JFrame {
 
     private void detenerTodo() {
 
-        gameTimer.stop();
-        tiempoTimer.stop();
+        repaintTimer.stop();
+
+        if (hiloNeo != null) {
+            hiloNeo.detener();
+            hiloNeo.interrupt();
+        }
+
+        if (hiloTiempo != null) {
+            hiloTiempo.detener();
+            hiloTiempo.interrupt();
+        }
+
+        if (hilosAgentes != null) {
+
+            for (HiloAgente h : hilosAgentes) {
+
+                h.detener();
+                h.interrupt();
+            }
+        }
+
+        board.setPausado(true);
+        board.setJuegoTerminado(true);
     }
 
     private void reiniciar() {
@@ -202,7 +233,13 @@ public class NivelGUI extends JFrame {
                 GameConfig.getCantidadMuros(),
                 GameConfig.getCantidadTelefonos());
 
+        board.setPausado(true);
+
         nivel = new Nivel(board);
+
+        hiloNeo = null;
+        hiloTiempo = null;
+        hilosAgentes = null;
 
         pausado = true;
 
@@ -213,18 +250,24 @@ public class NivelGUI extends JFrame {
 
     private void dibujar(Graphics g) {
 
-        g.drawImage(fondo,0,0,panel.getWidth(),panel.getHeight(),null);
+        g.drawImage(
+                fondo,
+                0,
+                0,
+                panel.getWidth(),
+                panel.getHeight(),
+                null);
 
-        for(int x=0;x<GameBoard.WIDTH;x++){
+        for (int x = 0; x < GameBoard.WIDTH; x++) {
 
-            for(int y=0;y<GameBoard.HEIGHT;y++){
+            for (int y = 0; y < GameBoard.HEIGHT; y++) {
 
-                Celda c = board.getCelda(x,y);
+                Celda c = board.getCelda(x, y);
 
                 int px = x * CELL_SIZE;
                 int py = y * CELL_SIZE;
 
-                if(c.getBloque()!=null){
+                if (c.getBloque() != null) {
 
                     g.drawImage(
                             c.getBloque().getSprite().getImage(),
@@ -235,7 +278,7 @@ public class NivelGUI extends JFrame {
                             null);
                 }
 
-                if(c.getEntidad()!=null){
+                if (c.getEntidad() != null) {
 
                     g.drawImage(
                             c.getEntidad().getSprite().getImage(),
@@ -245,13 +288,60 @@ public class NivelGUI extends JFrame {
                             CELL_SIZE,
                             null);
                 }
-                    ////Cuadricula 
-                //g.drawRect(
-                 //       px,
-                  //      py,
-                  //      CELL_SIZE,
-                  //      CELL_SIZE);
+
+                /*
+                g.drawRect(
+                        px,
+                        py,
+                        CELL_SIZE,
+                        CELL_SIZE);
+                */
             }
         }
+    }
+
+    @Override
+    public void restarSegundo() {
+
+        SwingUtilities.invokeLater(() -> {
+
+            tiempoRestante--;
+
+            int min = tiempoRestante / 60;
+            int seg = tiempoRestante % 60;
+
+            lblTiempo.setText(
+                    String.format("%02d:%02d", min, seg));
+
+            if (tiempoRestante <= 0) {
+
+                detenerTodo();
+
+                JOptionPane.showMessageDialog(
+                        this,
+                        "Tiempo agotado",
+                        "GAME OVER",
+                        JOptionPane.ERROR_MESSAGE);
+            }
+        });
+    }
+
+    public int verificarEstado() {
+
+        if (board.neoCapturado()) {
+
+            board.setJuegoTerminado(true);
+
+            return 1;
+        }
+
+        if (board.neoLlegoTelefono()) {
+
+            board.setJuegoTerminado(true);
+
+            return 2;
+        }
+
+        return 0;
     }
 }
